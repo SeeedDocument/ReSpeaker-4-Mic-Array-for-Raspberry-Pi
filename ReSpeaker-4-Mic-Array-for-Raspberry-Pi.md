@@ -57,33 +57,58 @@ Mount ReSpeaker 4-Mic Array on your Raspberry Pi, make sure that the pins are pr
 
 While the AC108 codec is not currently supported by current Pi kernel builds, we must it build manually.
 
+Make sure that you are running [the lastest Raspbian Operating System(debian 9)](https://www.raspberrypi.org/downloads/raspbian/) on your Pi. *(updated at 2017.09.15)*
+
 Get the seeed voice card source code.
 ```
-git clone --depth=1 https://github.com/respeaker/seeed-voicecard
+git clone https://github.com/respeaker/seeed-voicecard
 cd seeed-voicecard
-chmod +x install_4mic.sh
-sudo ./install_4mic.sh
+sudo ./install.sh 4mic
 reboot
 ```
 
 Check that the sound card name matches the source code seeed-voicecard.
 
 ```
-pi@raspberrypi:~/seeed-voicecard $ arecord -l
-**** List of CAPTURE Hardware Devices ****
-card 1: seeedvoicecard4 [seeed-voicecard-4mic], device 0: bcm2835-i2s-ac108-codec0 ac108-codec0-0 []
-  Subdevices: 1/1
-  Subdevice #0: subdevice #0
+pi@raspberrypi:~/seeed-voicecard $ arecord -L
+null
+    Discard all samples (playback) or generate zero samples (capture)
+playback
+capture
+dmixed
+array
+ac108
+default:CARD=seeed4micvoicec
+    seeed-4mic-voicecard,
+    Default Audio Device
+sysdefault:CARD=seeed4micvoicec
+    seeed-4mic-voicecard,
+    Default Audio Device
+dmix:CARD=seeed4micvoicec,DEV=0
+    seeed-4mic-voicecard,
+    Direct sample mixing device
+dsnoop:CARD=seeed4micvoicec,DEV=0
+    seeed-4mic-voicecard,
+    Direct sample snooping device
+hw:CARD=seeed4micvoicec,DEV=0
+    seeed-4mic-voicecard,
+    Direct hardware device without any conversions
+plughw:CARD=seeed4micvoicec,DEV=0
+    seeed-4mic-voicecard,
+    Hardware device with all software conversions
 ```
 
 If you want to change the alsa settings, You can use `sudo alsactl --file=ac108_asound.state store` to save it.
 
-Seeed-4mic-voicecard need a alsa plugin to decode the data:
+Then select the headphone jack on Raspberry Pi for audio output:
 ```
-cd ac108_plugin
-make
-sudo make install
+sudo raspi-config
+# Select 7 Advanced Options
+# Select A4 Audio
+# Select 1 Force 3.5mm ('headphone') jack
+# Finish
 ```
+
 Open Audacity and select **AC108** to test:
 
 ![](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/img/audacity.png?raw=true)
@@ -93,12 +118,10 @@ Open Audacity and select **AC108** to test:
 Or you could record with `arecord` and play with `aplay`:
 
 ```
-arecord -Dac108 -f S16_LE -c 4 -r 16000 hello.wav
-aplay -Dplughw:1,0 hello.wav
+arecord -Dac108 -f S32_LE -r 16000 -c 4 hello.wav
+aplay hello.wav
 // Audio will come out via audio jack of Raspberry Pi
 ```
-
-Note: If you can't record or can't play or play something strange, please see [here](#Debug).
 
 ### Getting Started with Google Assistant and Snowboy
 
@@ -125,56 +148,6 @@ cd /home/pi/4mics_hat
 - Run the example code `python pixels.py`
 
 <!-- ### DoA on ReSpeaker 4-Mic Array for Raspberry Pi -->
-
-
-
-
-### Debug
-
-`sudo nano /etc/asound.conf` make sure it look like this:
-
-```
-pcm.!default {
-        type ac108
-    slavepcm "hw:0,0"
-    channels 4
-}
-
-
-pcm.ac108 {
-        type ac108
-        slavepcm "hw:0,0"
-        channels 4
-}
-```
-
-and if there is an `.asoundrc` in your /home/pi path, make sure it look like this. If the file `.asoundrc` doesn't exist, ignore this one.
-
-```
-pcm.!default {
-        type ac108
-    slavepcm "hw:0,0"
-    channels 4
-}
-
-
-pcm.ac108 {
-        type ac108
-        slavepcm "hw:0,0"
-        channels 4
-}
-
-
-pcm.!default {
-        type hw
-        card 1
-}
-
-ctl.!default {
-        type hw
-        card 1
-}
-```
 
 
 ## Resources
