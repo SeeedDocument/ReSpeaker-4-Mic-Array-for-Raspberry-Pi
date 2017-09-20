@@ -50,6 +50,8 @@ Note that if you want to use the APA102 RGB LEDs, please write HIGH to `GPIO5` f
 
 Mount ReSpeaker 4-Mic Array on your Raspberry Pi, make sure that the pins are properly aligned when stacking the ReSpeaker 4-Mic Array for Raspberry Pi.
 
+**Note: Try not to hot-plugging ReSpeaker 4-Mic Array**
+
 ![connection pic1](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/img/connect1.jpg?raw=true)
 ![connection pic2](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/img/connect2.jpg?raw=true)
 
@@ -61,13 +63,22 @@ Make sure that you are running [the lastest Raspbian Operating System(debian 9)]
 
 Get the seeed voice card source code.
 ```
-git clone https://github.com/respeaker/seeed-voicecard
+git clone https://github.com/respeaker/seeed-voicecard.git
 cd seeed-voicecard
 sudo ./install.sh 4mic
 reboot
 ```
 
-Check that the sound card name matches the source code seeed-voicecard.
+Then select the headphone jack on Raspberry Pi for audio output:
+```
+sudo raspi-config
+# Select 7 Advanced Options
+# Select A4 Audio
+# Select 1 Force 3.5mm ('headphone') jack
+# Select Finish
+```
+
+Check that the sound card name looks like this:
 
 ```
 pi@raspberrypi:~/seeed-voicecard $ arecord -L
@@ -98,36 +109,30 @@ plughw:CARD=seeed4micvoicec,DEV=0
     Hardware device with all software conversions
 ```
 
-If you want to change the alsa settings, You can use `sudo alsactl --file=ac108_asound.state store` to save it.
+If you want to change the alsa settings, You can use `sudo alsactl --file=ac108_asound.state store` to save it. And when you need to use the settings again, copy it to: `sudo cp ./ac108_asound.state /var/lib/alsa/asound.state`
 
-Then select the headphone jack on Raspberry Pi for audio output:
-```
-sudo raspi-config
-# Select 7 Advanced Options
-# Select A4 Audio
-# Select 1 Force 3.5mm ('headphone') jack
-# Finish
-```
 
 Open Audacity and select **AC108** to test:
+```
+$ sudo apt update
+$ sudo apt install audacity
+$ audacity                      // run audacity
+```
+
 
 ![](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/img/audacity.png?raw=true)
-
-<!-- ### Configure sound settings and adjust the volume with **alsamixer** -->
 
 Or you could record with `arecord` and play with `aplay`:
 
 ```
-arecord -Dac108 -f S32_LE -r 16000 -c 4 hello.wav
-aplay hello.wav
-// Audio will come out via audio jack of Raspberry Pi
+arecord -Dac108 -f S32_LE -r 16000 -c 4 hello.wav    // only support 4 channels
+aplay hello.wav                                      // make sure default device
+                                                     // Audio will come out via audio jack of Raspberry Pi
 ```
-
-### Getting Started with Google Assistant and Snowboy
 
 ### How to use the on-board APA102 LEDs
 
-Each on-board APA102 LED has an additional driver chip. The driver chip takes care of receiving the desired colour via its input lines, and then holding this colour until a new command is received.
+Each on-board APA102 LED has an additional driver chip. The driver chip takes care of receiving the desired color via its input lines, and then holding this color until a new command is received.
 
 ![](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/img/rainbow.jpg?raw=true)
 
@@ -135,23 +140,65 @@ Each on-board APA102 LED has an additional driver chip. The driver chip takes ca
 - Get APA102 LEDs Library and examples
 
 ```
-cd /home/pi
-git clone https://github.com/respeaker/4mics_hat.git
-cd /home/pi/4mics_hat
+pi@raspberrypi:~ $ cd /home/pi
+pi@raspberrypi:~ $ git clone https://github.com/respeaker/4mics_hat.git
+pi@raspberrypi:~ $ cd /home/pi/4mics_hat
+pi@raspberrypi:~ $ sudo apt install python-virtualenv          # install python virtualenv tool
+pi@raspberrypi:~ $ virtualenv --system-site-packages ~/env     # create a virtual python environment
+pi@raspberrypi:~ $ source ~/env/bin/activate                   # activate the virtual environment
+(env) pi@raspberrypi:~ $ pip install spidev gpiozero           # install spidev and gpiozero
 ```
 
-<!-- - Edit `pixels.py` with `nano pixels.py`, change `PIXELS_N = 3` to `PIXELS_N = 12`, then press CTRL-X, press Y and Enter to save.
+- Then run the example code `python pixels.py`, now you can see the LEDs blink like Google Assistant.
 
-![](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/img/pixels_n12.png?raw=true) -->
+### DoA on ReSpeaker 4-Mic Array for Raspberry Pi
 
-- Install spidev `pip install spidev`
-- Run the example code `python pixels.py`
+With DoA(Direction of Arrial), ReSpeaker 4-Mic Array is able to find the direction where the sound source is located.
 
-<!-- ### DoA on ReSpeaker 4-Mic Array for Raspberry Pi -->
+```
+pi@raspberrypi:~ $ source ~/env/bin/activate                    # activate the virtual, if you have already activated, skip this step
+(env) pi@raspberrypi:~ $ cd ~/4mics_hat
+(env) pi@raspberrypi:~ $ sudo apt install libatlas-base-dev     # install snowboy dependencies
+(env) pi@raspberrypi:~ $ pip install ./snowboy*.whl             # install snowboy for KWS
+(env) pi@raspberrypi:~ $ pip install ./webrtc*.whl              # install webrtc for DoA
+(env) pi@raspberrypi:~ $ cd ~/
+(env) pi@raspberrypi:~ $ git clone https://github.com/voice-engine/voice-engine
+(env) pi@raspberrypi:~ $ cd voice-engine/
+(env) pi@raspberrypi:~ $ python setup.py install
+(env) pi@raspberrypi:~ $ cd examples
+(env) pi@raspberrypi:~ $ nano kws_doa.py
+```
+
+Then modify Line 14-21 of `kws_doa.py` to adapt 4-Mics:
+
+```
+from voice_engine.doa_respeaker_4mic_array import DOA
+
+
+def main():
+    src = Source(rate=16000, channels=4)
+    ch1 = ChannelPicker(channels=4, pick=1)
+    kws = KWS()
+    doa = DOA(rate=16000)
+```
+Save and exit, run `python kws_doa.py`
+
+
+### Getting Started with Alexa and Snowboy
+
+```
+cd ~/
+git clone https://github.com/respeaker/avs
+cd avs
+# install Requirements
+sudo apt install gstreamer1.0 gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly
+sudo apt install python-gi python-gst gir1.2-gstreamer-1.0
+pip install tornado
+```
+
+<!-- ### Getting Started with Google Assistant and Snowboy -->
 
 
 ## Resources
 
 [Schematics of ReSpeaker 4-Mic Array for Raspberry Pi(PDF)](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/src/ReSpeaker%204-Mic%20Array%20for%20Raspberry%20Pi%20%20v1.0.pdf)
-
-[Schematics of ReSpeaker 4-Mic Array for Raspberry Pi(EAGLE)](https://github.com/SeeedDocument/ReSpeaker-4-Mic-Array-for-Raspberry-Pi/blob/master/src/ReSpeaker%204-Mic%20Array%20for%20Raspberry%20Pi_eagle.zip)
