@@ -208,7 +208,7 @@ Then open a terminal at [VNC](https://www.raspberrypi.org/documentation/remote-a
 (env) pi@raspberrypi:~/respeaker_v2_eval/alexa $ cp ~/4mics_hat/pixels.py ./pixels.py
 (env) pi@raspberrypi:~/respeaker_v2_eval/alexa $ nano ns_kws_doa_alexa.py
 ```
-Modify L15-L40 to:
+Modify L15-L50 to:
 
 ```
     from voice_engine.kws import KWS
