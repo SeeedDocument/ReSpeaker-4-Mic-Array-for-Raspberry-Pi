@@ -209,7 +209,8 @@ Then open a terminal at [VNC](https://www.raspberrypi.org/documentation/remote-a
 (env) pi@raspberrypi:~/respeaker_v2_eval/alexa $ nano ns_kws_doa_alexa.py
 ```
 Modify L15-L40 to:
-    ```
+
+```
     from voice_engine.kws import KWS
     #from voice_engine.ns import NS
     #from voice_engine.doa_respeaker_4mic_array import DOA
@@ -244,7 +245,7 @@ Modify L15-L40 to:
             alexa.listen()
 
         kws.set_callback(on_detected)
-    ```
+```
 ![](/img/alexa.png)
 
 3. Get started!
