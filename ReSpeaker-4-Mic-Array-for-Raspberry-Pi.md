@@ -143,10 +143,10 @@ Each on-board APA102 LED has an additional driver chip. The driver chip takes ca
 pi@raspberrypi:~ $ cd /home/pi
 pi@raspberrypi:~ $ git clone https://github.com/respeaker/4mics_hat.git
 pi@raspberrypi:~ $ cd /home/pi/4mics_hat
-pi@raspberrypi:~ $ sudo apt install python-virtualenv          # install python virtualenv tool
-pi@raspberrypi:~ $ virtualenv --system-site-packages ~/env     # create a virtual python environment
-pi@raspberrypi:~ $ source ~/env/bin/activate                   # activate the virtual environment
-(env) pi@raspberrypi:~ $ pip install spidev gpiozero           # install spidev and gpiozero
+pi@raspberrypi:~/4mics_hat $ sudo apt install python-virtualenv          # install python virtualenv tool
+pi@raspberrypi:~/4mics_hat $ virtualenv --system-site-packages ~/env     # create a virtual python environment
+pi@raspberrypi:~/4mics_hat $ source ~/env/bin/activate                   # activate the virtual environment
+(env) pi@raspberrypi:~/4mics_hat $ pip install spidev gpiozero           # install spidev and gpiozero
 ```
 
 - Then run the example code `python pixels.py`, now you can see the LEDs blink like Google Assistant.
@@ -158,15 +158,16 @@ With DoA(Direction of Arrial), ReSpeaker 4-Mic Array is able to find the directi
 ```
 pi@raspberrypi:~ $ source ~/env/bin/activate                    # activate the virtual, if you have already activated, skip this step
 (env) pi@raspberrypi:~ $ cd ~/4mics_hat
-(env) pi@raspberrypi:~ $ sudo apt install libatlas-base-dev     # install snowboy dependencies
-(env) pi@raspberrypi:~ $ pip install ./snowboy*.whl             # install snowboy for KWS
-(env) pi@raspberrypi:~ $ pip install ./webrtc*.whl              # install webrtc for DoA
-(env) pi@raspberrypi:~ $ cd ~/
+(env) pi@raspberrypi:~/4mics_hat $ sudo apt install libatlas-base-dev     # install snowboy dependencies
+(env) pi@raspberrypi:~/4mics_hat $ sudo apt install python-pyaudio        # install pyaudio
+(env) pi@raspberrypi:~/4mics_hat $ pip install ./snowboy*.whl             # install snowboy for KWS
+(env) pi@raspberrypi:~/4mics_hat $ pip install ./webrtc*.whl              # install webrtc for DoA
+(env) pi@raspberrypi:~/4mics_hat $ cd ~/
 (env) pi@raspberrypi:~ $ git clone https://github.com/voice-engine/voice-engine
 (env) pi@raspberrypi:~ $ cd voice-engine/
-(env) pi@raspberrypi:~ $ python setup.py install
-(env) pi@raspberrypi:~ $ cd examples
-(env) pi@raspberrypi:~ $ nano kws_doa.py
+(env) pi@raspberrypi:~/voice-engine $ python setup.py install
+(env) pi@raspberrypi:~/voice-engine $ cd examples
+(env) pi@raspberrypi:~/voice-engine/examples $ nano kws_doa.py
 ```
 
 Then modify Line 14-21 of `kws_doa.py` to adapt 4-Mics:
@@ -184,17 +185,71 @@ def main():
 Save and exit, run `python kws_doa.py`
 
 
-### Getting Started with Alexa and Snowboy
+### Getting Started with Alexa, Baidu and Snowboy
 
+1. Get Alexa or Baidu authorization
 ```
-cd ~/
-git clone https://github.com/respeaker/avs
-cd avs
-# install Requirements
-sudo apt install gstreamer1.0 gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly
-sudo apt install python-gi python-gst gir1.2-gstreamer-1.0
-pip install tornado
+pi@raspberrypi:~ $ source ~/env/bin/activate                    # activate the virtual, if you have already activated, skip this step
+(env) pi@raspberrypi:~ $ cd ~/
+(env) pi@raspberrypi:~ $ git clone https://github.com/respeaker/avs
+(env) pi@raspberrypi:~ $ cd avs                                 # install Requirements
+(env) pi@raspberrypi:~/avs $ sudo apt install gstreamer1.0 gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly
+(env) pi@raspberrypi:~/avs $ sudo apt install python-gi gir1.2-gstreamer-1.0
+(env) pi@raspberrypi:~/avs $ pip install tornado
 ```
+Then open a terminal at [VNC](https://www.raspberrypi.org/documentation/remote-access/vnc/), run `alexa-auth` in the terminal to get Alexa authorization or run `dueros-auth` to get Baidu authorization. The authorization file will be saved in `/home/pi/.avs.json`.
+![](/img/auth.png)
+
+2. Configuration
+```
+(env) pi@raspberrypi:~ $ cd /home/pi
+(env) pi@raspberrypi:~ $ git clone https://github.com/respeaker/respeaker_v2_eval.git
+(env) pi@raspberrypi:~ $ cd respeaker_v2_eval/alexa
+(env) pi@raspberrypi:~/respeaker_v2_eval/alexa $ cp ~/4mics_hat/pixels.py ./pixels.py
+(env) pi@raspberrypi:~/respeaker_v2_eval/alexa $ nano ns_kws_doa_alexa.py
+```
+Modify L15-L40 to:
+    ```
+    from voice_engine.kws import KWS
+    #from voice_engine.ns import NS
+    #from voice_engine.doa_respeaker_4mic_array import DOA
+    from avs.alexa import Alexa
+    from pixels import pixels
+
+    def main():
+        logging.basicConfig(level=logging.DEBUG)
+
+        src = Source(rate=16000, channels=4, frames_size=800)
+        ch1 = ChannelPicker(channels=4, pick=1)
+        #ns = NS(rate=16000, channels=1)
+        kws = KWS(model='snowboy')
+        #doa = DOA(rate=16000)
+        alexa = Alexa()
+
+        alexa.state_listener.on_listening = pixels.listen
+        alexa.state_listener.on_thinking = pixels.think
+        alexa.state_listener.on_speaking = pixels.speak
+        alexa.state_listener.on_finished = pixels.off
+
+        src.link(ch1)
+        ch1.link(kws)
+        #ch1.link(ns)
+        #ns.link(kws)
+        kws.link(alexa)
+
+        #src.link(doa)
+        def on_detected(keyword):
+            #logging.info('detected {} at direction {}'.format(keyword, doa.get_direction()))
+            logging.info('detected {}'.format(keyword))
+            alexa.listen()
+
+        kws.set_callback(on_detected)
+    ```
+![](/img/alexa.png)
+
+3. Get started!
+
+    Now run `python ns_kws_doa_alexa.py`, you will see lots of debug message rasing in the terminal. When you see `status code: 204`, try to wake up respeaker with saying `snowboy`. Then the leds will light up, and now you can speak to it, for example, asking "who is the most handsome guy in the world?" or "Do you know how to beat-box?". Just enjoy it!
 
 <!-- ### Getting Started with Google Assistant and Snowboy -->
 
