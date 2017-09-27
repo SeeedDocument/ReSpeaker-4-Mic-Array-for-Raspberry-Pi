@@ -196,9 +196,18 @@ pi@raspberrypi:~ $ source ~/env/bin/activate                    # activate the v
 (env) pi@raspberrypi:~/avs $ sudo apt install gstreamer1.0 gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly
 (env) pi@raspberrypi:~/avs $ sudo apt install python-gi gir1.2-gstreamer-1.0
 (env) pi@raspberrypi:~/avs $ pip install tornado
+(env) pi@raspberrypi:~/avs $ python setup.py install
 ```
-Then open a terminal at [VNC](https://www.raspberrypi.org/documentation/remote-access/vnc/), run `alexa-auth` in the terminal to get Alexa authorization or run `dueros-auth` to get Baidu authorization. The authorization file will be saved in `/home/pi/.avs.json`.
-![](/img/auth.png)
+
+Then open a terminal at [VNC](https://www.raspberrypi.org/documentation/remote-access/vnc/), switch to the python virtual env with 
+ ```
+ # note: this is in the VNC terminal
+ pi@raspberrypi:~ $ source ~/env/bin/activate
+ (env) pi@raspberrypi:~ $ alexa-auth
+ ```
+ 
+ Run `alexa-auth` in the terminal to get Alexa authorization or run `dueros-auth` to get Baidu authorization. The authorization file will be saved in `/home/pi/.avs.json`.
+ ![](/img/auth.png)
 
 2. Configuration
 ```
