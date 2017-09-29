@@ -166,23 +166,11 @@ pi@raspberrypi:~ $ source ~/env/bin/activate                    # activate the v
 (env) pi@raspberrypi:~ $ git clone https://github.com/voice-engine/voice-engine
 (env) pi@raspberrypi:~ $ cd voice-engine/
 (env) pi@raspberrypi:~/voice-engine $ python setup.py install
-(env) pi@raspberrypi:~/voice-engine $ cd examples
-(env) pi@raspberrypi:~/voice-engine/examples $ nano kws_doa.py
+(env) pi@raspberrypi:~/voice-engine $ cd ~/4mics_hat
+(env) pi@raspberrypi:~/4mics_hat $ python kws_doa.py
 ```
 
-Then modify Line 14-21 of `kws_doa.py` to adapt 4-Mics:
-
-```
-from voice_engine.doa_respeaker_4mic_array import DOA
-
-
-def main():
-    src = Source(rate=16000, channels=4)
-    ch1 = ChannelPicker(channels=4, pick=1)
-    kws = KWS()
-    doa = DOA(rate=16000)
-```
-Save and exit, run `python kws_doa.py`
+After run `python kws_doa.py`, just say `snowboy` to test DoA. When it detects the keyword, the LEDs will light up and show the direction.
 
 
 ### Getting Started with Alexa, Baidu and Snowboy
