@@ -160,7 +160,13 @@ pi@raspberrypi:~ $ source ~/env/bin/activate                    # activate the v
 (env) pi@raspberrypi:~ $ cd ~/4mics_hat
 (env) pi@raspberrypi:~/4mics_hat $ sudo apt install libatlas-base-dev     # install snowboy dependencies
 (env) pi@raspberrypi:~/4mics_hat $ sudo apt install python-pyaudio        # install pyaudio
-(env) pi@raspberrypi:~/4mics_hat $ pip install ./snowboy*.whl             # install snowboy for KWS
+(env) pi@raspberrypi:~/4mics_hat $ git clone --depth 1 https://github.com/Kitt-AI/snowboy.git  # install snowboy 
+(env) pi@raspberrypi:~/4mics_hat $ cd snowboy
+(env) pi@raspberrypi:~/4mics_hat/snowboy $ sudo apt-get install swig python-dev libportaudio-dev libatlas-base-dev build-essential make
+(env) pi@raspberrypi:~/4mics_hat/snowboy $ python setup.py build
+(env) pi@raspberrypi:~/4mics_hat/snowboy $ python setup.py bdist_wheel
+(env) pi@raspberrypi:~/4mics_hat/snowboy $ sudo pip install dist/snowboy*.whl
+(env) pi@raspberrypi:~/4mics_hat/snowboy $ cd ..
 (env) pi@raspberrypi:~/4mics_hat $ pip install ./webrtc*.whl              # install webrtc for DoA
 (env) pi@raspberrypi:~/4mics_hat $ cd ~/
 (env) pi@raspberrypi:~ $ git clone https://github.com/voice-engine/voice-engine
